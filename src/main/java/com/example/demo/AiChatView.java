@@ -9,13 +9,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
-import org.springframework.ai.chat.ChatClient;
-import org.springframework.ai.chat.StreamingChatClient;
+import org.springframework.ai.chat.client.ChatClient;
 
-@Route(value ="ai-chat", layout = MainLayout.class)
+
+@Route(value = "ai-chat", layout = MainLayout.class)
 public class AiChatView extends VerticalLayout {
 
-    public AiChatView(StreamingChatClient chatClient) {
+    public AiChatView(ChatClient.Builder builder) {
+        var chatClient = builder.build();
         var ui = UI.getCurrent();
         var questionField = new TextField();
         var askButton = new Button("Ask");
@@ -28,9 +29,13 @@ public class AiChatView extends VerticalLayout {
         askButton.addClickShortcut(Key.ENTER);
 
         askButton.addClickListener(e -> {
-            chatClient.stream(questionField.getValue()).subscribe(token -> {
-                ui.access(() -> answer.setValue(answer.getValue() + token));
-            });
+            chatClient.prompt()
+                .user(questionField.getValue())
+                .stream()
+                .content()
+                .subscribe(token -> {
+                    ui.access(() -> answer.setValue(answer.getValue() + token));
+                });
         });
 
 
